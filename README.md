@@ -11,9 +11,33 @@ The Game is a 0 player game (it's a simulation) when each cell is represented by
 * pygame
 
 # How to run it
-to run it you just have to launch the *game_of_life.py* file, but there are some configurations you can do to the JSON file *config.json*
+1. Create a virtual environment
+```bash
+python3 -m venv env
+```
+2. activate virtual environment
+```bash
+source env/bin/activate
+```
+3. Install requirments
+```bash
+pip install requirements.txt
+```
+
+>if it doesn't work try
+>```bash
+>pip install pygame
+>```
+
+4. run 
+```bash
+python game_of_life.py
+```
+
 ## configuration
-in the *config.json* file you can 
+there are some configurations you can do to the JSON file *config.json*
+
+you can 
 1. adjust the the size of the window by modifying these parameters
 ```JSON
 "screen_size_width":1200,
