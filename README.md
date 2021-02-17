@@ -1,0 +1,39 @@
+# game-of-life
+this is an implementation of conway's Game of life, with python and pygame.
+The Game is a 0 player game (it's a simulation) when each cell is represented by a square, it can be alive or dead. and for each generation it's evolve following the rules bellow
+* if a dead cell is surrounded by exactly 3 alive cells then she will be alive in the next generation as if by reproduction. 
+* if an alive cell is surrounded by 2 or 3 alive cells it will survive on the next generation.
+* if an alive cell is surrounded by less than 2 (or more than 3) alive cells, it will die as if by underpopulation (resp by overpopulation).
+[for more information about the game check this wikipedia page](https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life)
+
+# Requirements
+* python3
+* pygame
+
+# How to run it
+to run it you just have to launch the *game_of_life.py* file, but there are some configurations you can do to the JSON file *config.json*
+## configuration
+in the *config.json* file you can 
+1. adjust the the size of the window by modifying these parameters
+```JSON
+"screen_size_width":1200,
+"screen_size_height":800,
+```
+2. modify the background color (color of the dead cells), and the cell color. 
+```JSON
+"background_color":"darkslategray",
+"cell_color":"tomato",
+```
+3. or the size of a cell wich will impact the number of cells in the board (smaller size imply more cells). 
+```JSON
+"cell_size_width":12,
+"cell_size_height":12,
+```
+The last paramater is the initial configuration and it represent the coordinate of cells alive at the begining of the simulation
+
+## How to play it
+you can add a living cell by taping the left click with the mousse, and delete a living cell with the right click.
+
+you can use the spacebar to pause/unpause the simulation
+
+you can use the backspace to reset the simulation (you'll kill all the cells)
