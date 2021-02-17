@@ -1,0 +1,189 @@
+import os
+import sys
+
+import pygame as pg
+
+
+class Game:
+
+    def __init__(self, max):
+        self.cells = {(40,40) : Cell((40,40)), (40,41) : Cell((40,41)),
+                    (41,40) : Cell((41,40)) ,(41,39) : Cell((41,39)),
+                            (42,40) : Cell((42,40))}
+        self.max = max
+        print(self.cells)
+
+    def reset(self):
+        self.cells = {}
+
+    def __setitem__(self, coord, value):
+        self.cells[coord] = value
+
+    def __delitem__(self, coord):
+        del self.cells[coord]
+
+    def next_generation(self):
+        """ method that build the next generation of the game"""
+        new_generation = {}
+        for i in range(self.max):
+            for j in range(self.max):
+                # first we need all the cell neighbors
+                neighboring_cells = self.__neighbors((i,j))
+                # we then need to select the active ones
+                alive_cells = {}
+                for adjacent_cell in neighboring_cells:
+                    if adjacent_cell in self.cells:
+                        alive_cells[adjacent_cell] = Cell(adjacent_cell)
+                # we check if our cell is dead or alive
+                if (i,j) in self.cells:
+                    # if it's alive then we'll keep it alive if there 2 or 3
+                    # neighbor's alive
+                    if len(alive_cells) == 3 or len(alive_cells) == 2:
+                        new_generation[(i,j)] = Cell((i,j))
+                else:
+                    # if it's not then we'll make it alive if there is exectly 3
+                    # neighbor's alive
+                    if len(alive_cells) == 3:
+                        new_generation[(i,j)] = Cell((i,j))
+        self.cells = new_generation
+
+
+
+    def __neighbors(self, cell):
+        """ method that retun the list of neighbors of a cell"""
+        if cell[0] == 0 and cell[1] == 0:
+            return{(0,1), (1,0), (1,1)}
+        elif cell[0] == 0 and cell[1] == self.max-1:
+            return{(0,self.max-2), (1,self.max-1), (1,self.max-2)}
+        if cell[0] == self.max-1 and cell[1] == 0:
+            return{(self.max-1,1), (self.max-2,0), (self.max-2,1)}
+        elif cell[0] == self.max-1 and cell[1] == self.max-1:
+            return{(self.max-1,self.max-2), (self.max-2,self.max-1), (self.max-2,self.max-2)}
+        elif cell[0] == self.max-1:
+            return{(self.max-1,cell[1]-1), (self.max-1,cell[1]+1), (self.max-2,cell[1]-1), (self.max-2,cell[1]+1), (self.max-2,cell[1])}
+        elif cell[0] == 0:
+            return{(0,cell[1]-1), (0,cell[1]+1), (1,cell[1]-1), (1,cell[1]+1), (1,cell[1])}
+        elif cell[1] == self.max-1:
+            return{(cell[0]-1, self.max-1), (cell[0]+1, self.max-1), (cell[0]-1, self.max-2), (cell[0]+1, self.max-2), (cell[0], self.max-2)}
+        elif cell[1] == 0:
+            return{(cell[0]-1, 0), (cell[0]+1, 0), (cell[0]-1, 1), (cell[0]+1, 1), (cell[0], 1)}
+        else:
+            return {
+                (cell[0]-1, cell[1]-1), (cell[0]-1, cell[1]), (cell[0]-1, cell[1]+1),
+                (cell[0], cell[1]-1), (cell[0], cell[1]+1),
+                (cell[0]+1, cell[1]-1), (cell[0]+1, cell[1]), (cell[0]+1, cell[1]+1),
+            }
+
+
+CAPTION = "Conway"
+SCREEN_SIZE = (1000, 1000)
+BACKGROUND_COLOR = pg.Color("darkslategray")
+VISITED_COLOR = [min(chan+20, 255) for chan in BACKGROUND_COLOR]
+
+class Cell:
+    size = (12, 12)
+
+    def __init__(self, coords):
+        self.color = pg.Color("tomato")
+        self.rect = pg.Rect((coords[0]*Cell.size[0],coords[1]*Cell.size[1]),
+                            Cell.size)
+        self.rect.inflate_ip(-2, -2)
+        self.age = 0
+
+    def draw(self, surface, background):
+        color = [min(chan+self.age, 255) for chan in self.color]
+        surface.fill(color, self.rect)
+        background.fill(VISITED_COLOR, self.rect)
+
+
+class App:
+    size = (12, 12)
+    """
+    Manages control flow for entire program.
+    """
+    def __init__(self):
+        self.screen = pg.display.get_surface()
+        self.screen_rect = self.screen.get_rect()
+        self.background = pg.Surface(self.screen_rect.size).convert()
+        self.background.fill(BACKGROUND_COLOR)
+        self.fps = 30
+        self.clock = pg.time.Clock()
+        self.done = False
+        self.cell_w = self.screen_rect.w//self.size[0]
+        self.cell_h = self.screen_rect.h//self.size[1]
+        self.game = Game(self.cell_w)
+        self.wrapping = True
+        self.generating = False
+
+    def reset(self):
+        self.game.reset()
+        self.background.fill(BACKGROUND_COLOR)
+
+    def event_loop(self):
+        """
+        Start and stop generation by pressing spacebar.
+        """
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                self.done = True
+            elif event.type == pg.KEYDOWN:
+                if event.key == pg.K_SPACE:
+                    self.generating = not self.generating
+                elif event.key == pg.K_BACKSPACE:
+                    self.reset()
+
+    def add_delete(self, mouse):
+        mouse_pos = pg.mouse.get_pos()
+        coords = mouse_pos[0]//self.size[0], mouse_pos[1]//self.size[1]
+        if mouse[0]:
+            self.game[coords] = Cell(coords)
+        elif mouse[2]:
+            try:
+                del (self.game[coords])
+            except KeyError:
+                pass
+
+    def update(self):
+        """
+        If generating is True, calculate the next generation of living cells.
+        """
+        mouse = pg.mouse.get_pressed()
+        if any(mouse):
+            self.add_delete(mouse)
+        elif self.generating:
+            self.game.next_generation()
+
+    def render(self):
+        """
+        Clear the screen and render all living cells.
+        """
+        self.screen.blit(self.background, (0,0))
+        for coord, cell in self.game.cells.items():
+            cell.draw(self.screen, self.background)
+        pg.display.update()
+
+    def main_loop(self):
+        """
+        Spin.
+        """
+        while not self.done:
+            self.event_loop()
+            self.update()
+            self.render()
+            self.clock.tick(self.fps)
+
+def main():
+    """
+    Set up our environment; create an App instance; and start our main loop.
+    """
+    os.environ["SDL_VIDEO_CENTERED"] = "True"
+    pg.init()
+    pg.display.set_caption(CAPTION)
+    pg.display.set_mode(SCREEN_SIZE)
+    App().main_loop()
+    pg.quit()
+    sys.exit()
+
+
+if __name__ == "__main__":
+    main()
