@@ -1,15 +1,21 @@
 import os
-import sys
+import json
 
 import pygame as pg
 
+with open("config.json") as file:
+    config = json.load(file)
+BACKGROUND_COLOR = pg.Color(config["background_color"])
+VISITED_COLOR = [min(chan+20, 255) for chan in BACKGROUND_COLOR]
 
 class Game:
 
     def __init__(self, max):
-        self.cells = {(40,40) : Cell((40,40)), (40,41) : Cell((40,41)),
-                    (41,40) : Cell((41,40)) ,(41,39) : Cell((41,39)),
-                            (42,40) : Cell((42,40))}
+        self.cells = {}
+        for value in config["initial_config"]:
+            coord = tuple(value)
+            self.cells[coord] = Cell(coord)
+        
         self.max = max
         print(self.cells)
 
@@ -75,16 +81,14 @@ class Game:
             }
 
 
-CAPTION = "Conway"
-SCREEN_SIZE = (1000, 1000)
-BACKGROUND_COLOR = pg.Color("darkslategray")
-VISITED_COLOR = [min(chan+20, 255) for chan in BACKGROUND_COLOR]
+
+
 
 class Cell:
-    size = (12, 12)
+    size = (config["cell_size_width"], config["cell_size_height"])
 
     def __init__(self, coords):
-        self.color = pg.Color("tomato")
+        self.color = pg.Color(config["cell_color"])
         self.rect = pg.Rect((coords[0]*Cell.size[0],coords[1]*Cell.size[1]),
                             Cell.size)
         self.rect.inflate_ip(-2, -2)
@@ -97,10 +101,10 @@ class Cell:
 
 
 class App:
-    size = (12, 12)
     """
     Manages control flow for entire program.
     """
+
     def __init__(self):
         self.screen = pg.display.get_surface()
         self.screen_rect = self.screen.get_rect()
@@ -109,8 +113,8 @@ class App:
         self.fps = 30
         self.clock = pg.time.Clock()
         self.done = False
-        self.cell_w = self.screen_rect.w//self.size[0]
-        self.cell_h = self.screen_rect.h//self.size[1]
+        self.cell_w = self.screen_rect.w//Cell.size[0]
+        self.cell_h = self.screen_rect.h//Cell.size[1]
         self.game = Game(self.cell_w)
         self.wrapping = True
         self.generating = False
@@ -134,7 +138,7 @@ class App:
 
     def add_delete(self, mouse):
         mouse_pos = pg.mouse.get_pos()
-        coords = mouse_pos[0]//self.size[0], mouse_pos[1]//self.size[1]
+        coords = mouse_pos[0]//Cell.size[0], mouse_pos[1]//Cell.size[1]
         if mouse[0]:
             self.game[coords] = Cell(coords)
         elif mouse[2]:
@@ -177,12 +181,12 @@ def main():
     Set up our environment; create an App instance; and start our main loop.
     """
     os.environ["SDL_VIDEO_CENTERED"] = "True"
+    screen_size = (config["screen_size_width"], config["screen_size_height"])
     pg.init()
-    pg.display.set_caption(CAPTION)
-    pg.display.set_mode(SCREEN_SIZE)
+    pg.display.set_caption("Game of life")
+    pg.display.set_mode(screen_size)
     App().main_loop()
     pg.quit()
-    sys.exit()
 
 
 if __name__ == "__main__":
