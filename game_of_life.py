@@ -10,13 +10,15 @@ VISITED_COLOR = [min(chan+20, 255) for chan in BACKGROUND_COLOR]
 
 class Game:
 
-    def __init__(self, max):
+    def __init__(self, max_width, max_height):
         self.cells = {}
         for value in config["initial_config"]:
             coord = tuple(value)
             self.cells[coord] = Cell(coord)
-        
-        self.max = max
+
+        self.max_width = max_width
+        self.max_height = max_height
+        print(max_width, self.max_height )
         print(self.cells)
 
     def reset(self):
@@ -31,8 +33,8 @@ class Game:
     def next_generation(self):
         """ method that build the next generation of the game"""
         new_generation = {}
-        for i in range(self.max):
-            for j in range(self.max):
+        for i in range(-10, self.max_width+10):
+            for j in range(-10, self.max_height+10):
                 # first we need all the cell neighbors
                 neighboring_cells = self.__neighbors((i,j))
                 # we then need to select the active ones
@@ -57,28 +59,11 @@ class Game:
 
     def __neighbors(self, cell):
         """ method that retun the list of neighbors of a cell"""
-        if cell[0] == 0 and cell[1] == 0:
-            return{(0,1), (1,0), (1,1)}
-        elif cell[0] == 0 and cell[1] == self.max-1:
-            return{(0,self.max-2), (1,self.max-1), (1,self.max-2)}
-        if cell[0] == self.max-1 and cell[1] == 0:
-            return{(self.max-1,1), (self.max-2,0), (self.max-2,1)}
-        elif cell[0] == self.max-1 and cell[1] == self.max-1:
-            return{(self.max-1,self.max-2), (self.max-2,self.max-1), (self.max-2,self.max-2)}
-        elif cell[0] == self.max-1:
-            return{(self.max-1,cell[1]-1), (self.max-1,cell[1]+1), (self.max-2,cell[1]-1), (self.max-2,cell[1]+1), (self.max-2,cell[1])}
-        elif cell[0] == 0:
-            return{(0,cell[1]-1), (0,cell[1]+1), (1,cell[1]-1), (1,cell[1]+1), (1,cell[1])}
-        elif cell[1] == self.max-1:
-            return{(cell[0]-1, self.max-1), (cell[0]+1, self.max-1), (cell[0]-1, self.max-2), (cell[0]+1, self.max-2), (cell[0], self.max-2)}
-        elif cell[1] == 0:
-            return{(cell[0]-1, 0), (cell[0]+1, 0), (cell[0]-1, 1), (cell[0]+1, 1), (cell[0], 1)}
-        else:
-            return {
+        return {
                 (cell[0]-1, cell[1]-1), (cell[0]-1, cell[1]), (cell[0]-1, cell[1]+1),
                 (cell[0], cell[1]-1), (cell[0], cell[1]+1),
                 (cell[0]+1, cell[1]-1), (cell[0]+1, cell[1]), (cell[0]+1, cell[1]+1),
-            }
+        }
 
 
 
@@ -115,7 +100,7 @@ class App:
         self.done = False
         self.cell_w = self.screen_rect.w//Cell.size[0]
         self.cell_h = self.screen_rect.h//Cell.size[1]
-        self.game = Game(self.cell_w)
+        self.game = Game(self.cell_w, self.cell_h)
         self.wrapping = True
         self.generating = False
 
